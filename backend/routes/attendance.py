@@ -4,25 +4,34 @@ from schemas import Attendance
 from datetime import datetime, time
 
 router = APIRouter()
+
 @router.post("/attendance")
 def mark_attendance(payload: Attendance):
-
-    
-    data = payload.model_dump()
-    employee = employee_collection.find_one(
-        {"employee_id": payload.employee_id}
-    )
+    # Check if employee exists
+    employee = employee_collection.find_one({"employee_id": payload.employee_id})
     if not employee:
         raise HTTPException(
             status_code=404,
             detail="Employee does not exist"
         )
 
-    data["date"] = datetime.combine(data["date"], time.min)
+    # Prepare date (set time to 00:00)
+    attendance_date = datetime.combine(payload.date, time.min)
 
-    attendance_collection.insert_one(data)
+    # Upsert attendance
+    result = attendance_collection.update_one(
+        {"employee_id": payload.employee_id, "date": attendance_date},
+        {"$set": {"status": payload.status}},
+        upsert=True
+    )
 
-    return {"message": "Attendance marked successfully"}
+    if result.matched_count:
+        message = "Attendance updated successfully"
+    else:
+        message = "Attendance marked successfully"
+
+    return {"message": message}
+
 
 @router.get("/attendance/{employee_id}")
 def get_attendance(employee_id: str):

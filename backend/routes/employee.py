@@ -11,12 +11,12 @@ def add_employee(employee: Employee):
     try:
         employee_collection.insert_one(employee.dict())
         return {"message": "Employee added successfully"}
-    except DuplicateKeyError:
-        raise HTTPException(
-            status_code=400,
-            detail="Employee ID already exists"
-        )
-        
+    except DuplicateKeyError as e: 
+        if "employee_id" in str(e):
+            raise HTTPException(status_code=400, detail="Employee ID already exists")
+        if "email" in str(e):
+            raise HTTPException(status_code=400, detail="Email already exists")
+        raise HTTPException(status_code=400, detail="Duplicate key error")    
 
 @router.get("/employees")
 def get_employees():

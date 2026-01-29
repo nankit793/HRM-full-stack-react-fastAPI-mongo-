@@ -18,3 +18,7 @@ employee_collection.create_index(
     [("employee_id", ASCENDING)],
     unique=True
 )
+employee_collection.create_index(
+    [("email")],
+    unique=True
+)
